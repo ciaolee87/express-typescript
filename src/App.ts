@@ -4,82 +4,90 @@ import morgan = require('morgan');
 import cookieParser from "cookie-parser";
 import {IndexRouter} from "./routes/IndexRouter";
 import {NextFunction, Request, Response} from "express-serve-static-core";
-import createHttpError from "http-errors";
 import session from "express-session";
 import flash from 'connect-flash';
+import DB from "./models";
+import Passport, {PassportStatic} from "passport";
 
 
 class App {
-    public app: express.Application;
+	public app: express.Application;
+	public db = DB;
+	public passport = Passport;
 
 
-    public static bootstrap(): App {
-        return new App();
-    }
+	public static bootstrap(): App {
+		return new App();
+	}
 
-    constructor() {
-        this.app = express();
-        this.setMiddleware();
-        this.setRouters();
-        this.setErrorHandler();
-    }
+	constructor() {
+		// 익스프레스 객체 생성
+		this.app = express();
 
-    setMiddleware() {
-        // 뷰 렌더링 엔진 선택
-        this.app.engine('pug', require('pug').__express);
-        this.app.set('views', path.join(__dirname, './views'));
-        this.app.set('view engine', 'pug');
+		// DB 연결
+		this.db.sequelize.sync();
 
-        // 로거 설정
-        this.app.use(morgan('dev'));
+		this.setMiddleware();
+		this.setRouters();
+		this.setErrorHandler();
+	}
 
-        // json parser 설정
-        this.app.use(express.json());
-        this.app.use(express.urlencoded({extended: false}));
+	setMiddleware() {
+		// 뷰 렌더링 엔진 선택
+		this.app.engine('pug', require('pug').__express);
+		this.app.set('views', path.join(__dirname, './views'));
+		this.app.set('view engine', 'pug');
 
-        // cookie parser 설정
-        this.app.use(cookieParser());
+		// 로거 설정
+		this.app.use(morgan('dev'));
 
-        // static 파일 위치 설정(그림 등)
-        this.app.use(express.static(path.join(__dirname, './assets')));
+		// json parser 설정
+		this.app.use(express.json());
+		this.app.use(express.urlencoded({extended: false}));
 
-        // session 설정
-        this.app.use(session({
-            secret: 'nodebirdsecre',
-            resave: false,
-            saveUninitialized: false,
-            cookie: {
-                httpOnly: true,
-                secure: false
-            }
-        }));
+		// cookie parser 설정
+		this.app.use(cookieParser());
+
+		// static 파일 위치 설정(그림 등)
+		this.app.use(express.static(path.join(__dirname, './assets')));
+
+		// session 설정
+		this.app.use(session({
+			secret: 'nodebirdsecre',
+			resave: false,
+			saveUninitialized: false,
+			cookie: {
+				httpOnly: true,
+				secure: false
+			}
+		}));
 
 
-        // flash 이용
-        this.app.use(flash());
-    }
+		// flash 이용
+		this.app.use(flash());
+	}
 
-    setRouters() {
-        this.app.use('/', new IndexRouter().getRouter());
+	setRouters() {
+		this.app.use('/', new IndexRouter().getRouter());
 
-        // 지정되지 않은 요청이라면 에러를 발생 시킨다
-        this.app.use((req: Request, res: Response, next: NextFunction) => {
-            const err = new Error('Page not found');
-            err.name = '404';
-            next(err);
-        });
-    }
+		// 지정되지 않은 요청이라면 에러를 발생 시킨다
+		this.app.use((req: Request, res: Response, next: NextFunction) => {
+			const err = new Error('Page not found');
+			err.name = '404';
+			next(err);
+		});
+	}
 
-    setErrorHandler() {
-        this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-            res.locals['message'] = err['message'];
-            res.locals.error = req.app.get('env') === 'development' ? err : {};
+	setErrorHandler() {
+		this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+			res.locals['message'] = err['message'];
+			res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-            // render the error page
-            res.status(Number(err.name) || 500);
-            res.render('error');
-        });
-    }
+			// render the error page
+			res.status(Number(err.name) || 500);
+			res.render('error');
+		});
+	}
 }
 
 export default App;

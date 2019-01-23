@@ -1,4 +1,5 @@
 import {Router} from "./Router";
+import {IsLoggedIn, IsNotLoggedIn} from "../middlewares/LoginMidware";
 
 export class IndexRouter extends Router {
 	constructor() {
@@ -6,9 +7,17 @@ export class IndexRouter extends Router {
 	}
 
 	initRouter(): any {
-		this.router.get('/', (req, res, next) => {
-			res.render('index', {title: 'Express'});
-			res.send("Hello world");
+		this.router.get('/profile', IsLoggedIn, (req, res) => {
+			res.render('profile', {
+				title: '내 정보 - NodeBird',
+				user: req.user
+			})
+		});
+
+		this.router.get('/join', IsNotLoggedIn, (req, res) => {
+			res.render('join', {
+				title:
+			})
 		});
 	}
 }

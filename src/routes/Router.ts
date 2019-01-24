@@ -1,7 +1,7 @@
 import express from 'express';
 
 export abstract class Router {
-	protected router: express.Router;
+	private readonly router: express.Router;
 
 	protected constructor() {
 		this.router = express.Router();
@@ -12,5 +12,14 @@ export abstract class Router {
 		return this.router;
 	}
 
-	abstract initRouter(): any;
+	private initRouter() {
+		for (let fieldName in this) {
+			if (fieldName.endsWith('Route')) {
+				let method:any = this[fieldName];
+				method.call(this, this.router);
+				console.debug('-> Set Route :', fieldName);
+			}
+		}
+	}
 }
+

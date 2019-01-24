@@ -26,7 +26,17 @@ var IndexRouter = /** @class */ (function (_super) {
         });
         this.router.get('/join', LoginMidware_1.IsNotLoggedIn, function (req, res) {
             res.render('join', {
-                title: 
+                title: '회원가입 - NodeBird',
+                user: req.user,
+                joinError: req.flash('joinError')
+            });
+        });
+        this.router.get('/', function (req, res, next) {
+            res.render('main', {
+                title: 'NodeBird',
+                twits: [],
+                user: req.user,
+                loginError: req.flash('loginError')
             });
         });
     };
